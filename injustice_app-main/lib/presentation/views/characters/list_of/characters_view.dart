@@ -44,8 +44,10 @@ class _CharactersViewState extends State<CharactersView> {
     // _viewModel.refresh();
   }
 
+  
   Future<void> _deleteCharacter(Character character) async {
-    // await _viewModel.deleteCharacter(character.id);
+    //descomentado// 
+    await _viewModel.commands.deleteCharacter(character.id);
 
     if (mounted) {
       ScaffoldMessenger.of(

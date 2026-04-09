@@ -9,16 +9,21 @@ class CharactersCommandsViewModel {
   final CharactersStateViewmodel state;
   final GetAllCharactersCommand _getAccountCommand;
   final CreateCharacterCommand _createCharacterCommand;
+  final DeleteCharacterCommand _deleteCharacterCommand; //começo
 
   CharactersCommandsViewModel({
     required this.state,
     required GetAllCharactersCommand getAccountCommand,
-    required CreateCharacterCommand createCharacterCommand,
+    required CreateCharacterCommand createCharacterCommand, 
+    required DeleteCharacterCommand deleteCharacterCommand, //começo
   }) : _getAccountCommand = getAccountCommand,
-       _createCharacterCommand = createCharacterCommand {
+       _createCharacterCommand = createCharacterCommand, 
+        _deleteCharacterCommand = deleteCharacterCommand //começo
+        {
     // Observers para cada comando
     _observeGetAllCharacters();
     _observeCreateCharacter();
+    _observeDeleteCharacter(); 
   }
 
   // ========================================================
@@ -26,7 +31,7 @@ class CharactersCommandsViewModel {
   // ========================================================
   GetAllCharactersCommand get getAllCharactersCommand => _getAccountCommand;
   CreateCharacterCommand get createCharacterCommand => _createCharacterCommand;
-
+  DeleteCharacterCommand get deleteCharacterCommand => _deleteCharacterCommand; //começo
   // ========================================================
   //   MÉTODO GENÉRICO DE OBSERVAÇÃO DE COMANDOS
   // ========================================================
@@ -89,6 +94,25 @@ class CharactersCommandsViewModel {
     );
   }
 
+//começo
+  void _observeDeleteCharacter() {  
+    _observeCommand<Character>(
+      _deleteCharacterCommand, // Se o nome for este no seu código
+      onSuccess: (deletedCharacter) {
+        // Sucesso: Não precisamos fazer nada, pois a UI já removeu.
+        // Opcional: state.setMessage("${deletedCharacter.name} excluído");
+      },
+      onFailure: (err) {
+        // SE DER ERRO: O personagem sumiu da tela mas continua no banco.
+        // Chamamos o fetch para ele reaparecer na lista.
+        fetchCharacters();
+        state.setMessage("Erro ao excluir no banco: ${err.msg}");
+      },
+    );
+  }
+
+  //fim
+
   // ========================================================
   //   MÉTODOS PÚBLICOS (CHAMADOS PELOS WIDGETS)
   //   que disparam os commands
@@ -104,4 +128,12 @@ class CharactersCommandsViewModel {
     state.clearMessage(); // Limpa mensagens anteriores
     await _createCharacterCommand.executeWith((character: character));
   }
+  //começo
+  Future<void> deleteCharacter(String id) async {
+    state.clearMessage();
+    await _deleteCharacterCommand.executeWith((id: id));
+  }
+
+  Future<void> createCharacter(Character result) async {}
+  //fim
 }

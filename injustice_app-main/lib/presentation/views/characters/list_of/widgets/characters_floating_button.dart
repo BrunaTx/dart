@@ -3,6 +3,10 @@ import '../../../../../helper_dev/fakes/character_factory.dart';
 import '../../../../controllers/characters_view_model.dart';
 import 'package:signals_flutter/signals_flutter.dart';
 
+import 'package:injustice_app/presentation/controllers/characters_view_model.dart';
+import 'package:injustice_app/presentation/views/characters/list_of/create/character_create_view.dart';
+import 'package:injustice_app/domain/models/character_entity.dart';
+
 class CharactersFab extends StatelessWidget {
   final CharactersViewModel viewModel;
 
@@ -14,12 +18,20 @@ class CharactersFab extends StatelessWidget {
       final isExecuting =
           viewModel.commands.createCharacterCommand.isExecuting.value;
 
-      return FloatingActionButton(
+     return FloatingActionButton(
         onPressed: isExecuting
             ? null
             : () async {
-                final character = CharacterFactory.list(1).first;
-                await viewModel.commands.addCharacter(character);
+                final Character? result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CharacterCreateView(),
+                  ),
+                );
+
+                if (result != null) {
+                  await viewModel.commands.addCharacter(result);
+                }
               },
         child: isExecuting
             ? const SizedBox(

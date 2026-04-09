@@ -63,7 +63,9 @@ class CharactersBody extends StatelessWidget {
                     final character = characters[index];
                     return CharacterListItem(
                       character: character,
-                      onDelete: () {},
+                      onDelete: () async {
+                        await viewModel.commands.deleteCharacter(character.id);
+                      },
                       onTap: () {},
                     );
                   }, childCount: characters.length),

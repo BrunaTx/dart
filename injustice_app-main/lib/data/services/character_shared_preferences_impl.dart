@@ -13,11 +13,35 @@ final class CharacterSharedPreferencesService
   // Chave de armazenamento para os personagens
   static const String _storageKey = 'characters';
 
+  //começo
   @override
-  Future<CharacterResult> deleteCharacter(String id) {
-    // TODO: implement deleteCharacter
-    throw UnimplementedError();
+Future<CharacterResult> deleteCharacter(String id) async {
+  try {
+    final currentResult = await getAllCharacters();
+
+    return await currentResult.fold(
+      onSuccess: (characters) async {
+        // pega o personagem antes de deletar
+        final deleted = characters.firstWhere((c) => c.id == id);
+
+        // remove da lista
+        final updated = characters.where((c) => c.id != id).toList();
+
+        // salva nova lista
+        await _saveCharacters(updated);
+
+        // retorna o deletado (agora correto)
+        return Success(deleted);
+      },
+      onFailure: (failure) async {
+        return Error(ApiLocalFailure('Erro ao deletar personagem'));
+      },
+    );
+  } catch (e) {
+    return Error(ApiLocalFailure('Erro ao deletar: $e'));
   }
+}
+  //fim
 
   @override
   Future<ListCharacterResult> getAllCharacters() async {
