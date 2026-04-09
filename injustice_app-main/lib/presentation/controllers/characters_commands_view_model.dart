@@ -7,33 +7,41 @@ import 'package:signals_flutter/signals_flutter.dart';
 
 class CharactersCommandsViewModel {
   final CharactersStateViewmodel state;
-  final GetAllCharactersCommand _getAccountCommand;
+  
+  // Comandos privados
+  final GetAllCharactersCommand _getAllCharactersCommand;
   final CreateCharacterCommand _createCharacterCommand;
-  final DeleteCharacterCommand _deleteCharacterCommand; //começo
+  final DeleteCharacterCommand _deleteCharacterCommand;
+  final UpdateCharacterCommand _updateCharacterCommand;
 
   CharactersCommandsViewModel({
     required this.state,
     required GetAllCharactersCommand getAccountCommand,
-    required CreateCharacterCommand createCharacterCommand, 
-    required DeleteCharacterCommand deleteCharacterCommand, //começo
-  }) : _getAccountCommand = getAccountCommand,
-       _createCharacterCommand = createCharacterCommand, 
-        _deleteCharacterCommand = deleteCharacterCommand //começo
-        {
-    // Observers para cada comando
+    required CreateCharacterCommand createCharacterCommand,
+    required DeleteCharacterCommand deleteCharacterCommand,
+    required UpdateCharacterCommand updateCharacterCommand,
+  })  : _getAllCharactersCommand = getAccountCommand,
+        _createCharacterCommand = createCharacterCommand,
+        _deleteCharacterCommand = deleteCharacterCommand,
+        _updateCharacterCommand = updateCharacterCommand {
+    
+    // Inicializa os observers (Effects)
     _observeGetAllCharacters();
     _observeCreateCharacter();
-    _observeDeleteCharacter(); 
+    _observeDeleteCharacter();
+    _observeUpdateCharacter();
   }
 
   // ========================================================
-  //   GETTERS PARA WIDGETS USAREM DIRETAMENTE OS COMANDOS
+  //   GETTERS PARA WIDGETS
   // ========================================================
-  GetAllCharactersCommand get getAllCharactersCommand => _getAccountCommand;
+  GetAllCharactersCommand get getAllCharactersCommand => _getAllCharactersCommand;
   CreateCharacterCommand get createCharacterCommand => _createCharacterCommand;
-  DeleteCharacterCommand get deleteCharacterCommand => _deleteCharacterCommand; //começo
+  DeleteCharacterCommand get deleteCharacterCommand => _deleteCharacterCommand;
+  UpdateCharacterCommand get updateCharacterCommand => _updateCharacterCommand;
+
   // ========================================================
-  //   MÉTODO GENÉRICO DE OBSERVAÇÃO DE COMANDOS
+  //   MÉTODO GENÉRICO DE OBSERVAÇÃO
   // ========================================================
   void _observeCommand<T>(
     Command<T, Failure> command, {
@@ -41,22 +49,19 @@ class CharactersCommandsViewModel {
     void Function(Failure err)? onFailure,
   }) {
     effect(() {
-      // 1) Ignora enquanto está executando
       if (command.isExecuting.value) return;
 
-      // 2) Ignora até existir um resultado
       final result = command.result.value;
       if (result == null) return;
 
-      // 3) Sucesso ou falha
       result.fold(
         onSuccess: (data) {
-          state.clearMessage(); // sempre limpa erros em sucesso
-          onSuccess(data); // ação específica para esse comando
+          state.clearMessage();
+          onSuccess(data); 
           command.clear();
         },
         onFailure: (err) {
-          state.setMessage(err.msg); // registra o erro no estado
+          state.setMessage(err.msg);
           if (onFailure != null) onFailure(err);
           command.clear();
         },
@@ -65,75 +70,86 @@ class CharactersCommandsViewModel {
   }
 
   // ========================================================
-  //   OBSERVERS ESPECÍFICOS
+  //   OBSERVERS (ATUALIZAÇÃO DE ESTADO)
   // ========================================================
 
-  /// Buscar todos os personagens
   void _observeGetAllCharacters() {
     _observeCommand<List<Character>>(
-      _getAccountCommand,
-      onSuccess: (characters) {
-        state.clearMessage(); // Limpa mensagens anteriores
-        state.state.value = characters;
-      },
-      onFailure: (err) =>
-          state.setMessage(err.msg), // registra o erro no estado
+      _getAllCharactersCommand,
+      onSuccess: (characters) => state.state.value = characters,
     );
   }
-  /// Criar um novo personagem
-  void _observeCreateCharacter() {  
+
+  void _observeCreateCharacter() {
     _observeCommand<Character>(
       _createCharacterCommand,
       onSuccess: (newCharacter) {
         final currentList = state.state.value;
-        final newlist = [...currentList, newCharacter]; // Adiciona o novo personagem à lista
-        state.state.value = newlist; 
+        state.state.value = [...currentList, newCharacter];
       },
-      onFailure: (err) =>
-          state.setMessage(err.msg), // registra o erro no estado
     );
   }
 
-//começo
-  void _observeDeleteCharacter() {  
+  void _observeDeleteCharacter() {
     _observeCommand<Character>(
-      _deleteCharacterCommand, // Se o nome for este no seu código
+      _deleteCharacterCommand,
       onSuccess: (deletedCharacter) {
-        // Sucesso: Não precisamos fazer nada, pois a UI já removeu.
-        // Opcional: state.setMessage("${deletedCharacter.name} excluído");
+        // Opcional: A UI geralmente remove antes, mas aqui garantimos a sincronia
+        state.state.value = state.state.value
+            .where((c) => c.id != deletedCharacter.id)
+            .toList();
       },
       onFailure: (err) {
-        // SE DER ERRO: O personagem sumiu da tela mas continua no banco.
-        // Chamamos o fetch para ele reaparecer na lista.
+        // Se falhar no banco, recarregamos a lista para restaurar o item na UI
         fetchCharacters();
-        state.setMessage("Erro ao excluir no banco: ${err.msg}");
       },
     );
   }
 
-  //fim
-
-  // ========================================================
-  //   MÉTODOS PÚBLICOS (CHAMADOS PELOS WIDGETS)
-  //   que disparam os commands
-  // ========================================================
-  /// buscca personagens e atualiza o estado
-  Future<void> fetchCharacters() async {
-    state.clearMessage(); // Limpa mensagens anteriores
-    await _getAccountCommand.executeWith(());
+  void _observeUpdateCharacter() {
+    _observeCommand<Character>(
+      _updateCharacterCommand,
+      onSuccess: (updatedChar) {
+        final currentList = state.state.value;
+        // Substitui o personagem antigo pelo atualizado mantendo a ordem
+        state.state.value = currentList.map((c) {
+          return c.id == updatedChar.id ? updatedChar : c;
+        }).toList();
+      },
+    );
   }
 
-  /// adiciona personagem e atualiza o estado
+  // ========================================================
+  //   MÉTODOS PÚBLICOS (CHAMADOS PELA VIEW)
+  // ========================================================
+
+  Future<void> fetchCharacters() async {
+    state.clearMessage();
+    await _getAllCharactersCommand.executeWith(());
+  }
+
   Future<void> addCharacter(Character character) async {
-    state.clearMessage(); // Limpa mensagens anteriores
+    state.clearMessage();
     await _createCharacterCommand.executeWith((character: character));
   }
-  //começo
+
   Future<void> deleteCharacter(String id) async {
     state.clearMessage();
     await _deleteCharacterCommand.executeWith((id: id));
   }
 
-  Future<void> createCharacter(Character result) async {}
-  //fim
+  // No arquivo characters_commands_view_model.dart
+
+Future<void> updateCharacter(Character character) async {
+  state.clearMessage();
+  
+  if (character.id.isEmpty) {
+    state.setMessage("Erro: ID do personagem inválido para atualização.");
+    return;
+  }
+
+  // Certifique-se de que o executeWith está enviando o Record EXATAMENTE
+  // como definido no seu CharacterParams (typedef)
+  await _updateCharacterCommand.executeWith((character: character));
+}
 }

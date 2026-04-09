@@ -57,3 +57,15 @@ final class DeleteCharacterUseCaseImpl implements IDeleteCharacterUseCase {
     return _repository.deleteCharacter(params.id);
   }
 }
+
+// No arquivo character_usecases_impl.dart
+final class UpdateCharacterUseCaseImpl implements IUpdateCharacterUseCase {
+  final ICharacterRepository _repository;
+
+  UpdateCharacterUseCaseImpl(this._repository);
+
+  @override
+  Future<CharacterResult> call(CharacterParams params) async {
+    return await _repository.update(params.character);
+  }
+}

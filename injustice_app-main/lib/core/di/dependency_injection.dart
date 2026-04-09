@@ -20,17 +20,18 @@ import '../../presentation/controllers/account_viewmodel.dart';
 import '../../presentation/controllers/characters_view_model.dart';
 import '../theme/theme_controller.dart';
 
+
 final injector = AutoInjector();
+
 void setupDependencyInjection() {
 
   // Regristração de dependências do Core
   injector.addSingleton<ThemeController>(ThemeController.new);
 
   // Regristração de dependências para Account
-  // Repositories e servicos
   injector.addSingleton<IAccountLocalStorage>(AccountSharedPreferencesService.new);
   injector.addSingleton<IAccountRepository>(AccountRepositoryImpl.new);
-  // Use Cases e Facades
+  
   injector.addSingleton<IAccountFacadeUseCases>(AccountFacadeUsecasesImpl.new);
   injector.addSingleton<IGetAccountUseCase>(GetAccountUseCaseImpl.new);
   injector.addSingleton<ISaveAccountUseCase>(SaveAccountUseCaseImpl.new);
@@ -38,22 +39,24 @@ void setupDependencyInjection() {
   injector.addSingleton<IUpdateAccountUseCase>(UpdateAccountUseCaseImpl.new);
   
   // Regristração de dependências para Character
-  // Repositories e serviços
   injector.addSingleton<ICharacterLocalStorage>(CharacterSharedPreferencesService.new);
   injector.addSingleton<ICharacterRepository>(CharacterRepositoryImpl.new);
-  // Use Cases e Facades
+  
   injector.addSingleton<ICharacterFacadeUseCases>(CharacterFacadeUseCasesImpl.new);
   injector.addSingleton<IGetAllCharactersUseCase>(GetAllCharactersUseCaseImpl.new);
   injector.addSingleton<IGetCharacterByIdUseCase>(GetCharacterByIdUseCaseImpl.new);
   injector.addSingleton<ISaveCharacterUseCase>(SaveCharacterUseCaseImpl.new);
   injector.addSingleton<IDeleteCharacterUseCase>(DeleteCharacterUseCaseImpl.new);
   
+  // --- LINHA ADICIONADA AQUI ---
+  injector.addSingleton<IUpdateCharacterUseCase>(UpdateCharacterUseCaseImpl.new);
+  // -----------------------------
 
-  // viewmodes
-  // Account viewmodes
+  // ViewModels
   injector.addSingleton<AccountViewModel>(AccountViewModel.new);
-  // Character List viewmodel
   injector.addSingleton<CharactersViewModel>(CharactersViewModel.new);
 
+  // O commit finaliza a configuração e instancia os Singletons
   injector.commit();
 }
+

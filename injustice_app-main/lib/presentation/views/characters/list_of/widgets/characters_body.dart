@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:injustice_app/presentation/views/characters/list_of/create/character_create_view.dart';
 import '../../../../../core/theme/app_theme.dart';
 import '../../../../../domain/models/account_entity.dart';
 import '../../../../../domain/models/character_entity.dart';
@@ -20,6 +21,7 @@ class CharactersBody extends StatelessWidget {
     required this.viewModel,
     required this.account,
   });
+  
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +32,8 @@ class CharactersBody extends StatelessWidget {
       final characters = viewModel.charactersState.sortedCharacters.value;
 
       return RefreshIndicator(
-        onRefresh: () async {},
+        onRefresh: () async {await viewModel.commands.getAllCharactersCommand.execute();
+  },
         child: CustomScrollView(
           slivers: [
             /// Header
@@ -60,15 +63,28 @@ class CharactersBody extends StatelessWidget {
                 padding: AppSpacing.paddingMd,
                 sliver: SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
-                    final character = characters[index];
-                    return CharacterListItem(
-                      character: character,
-                      onDelete: () async {
-                        await viewModel.commands.deleteCharacter(character.id);
-                      },
-                      onTap: () {},
-                    );
-                  }, childCount: characters.length),
+  final character = characters[index]; // Esta é a variável correta
+  
+  return CharacterListItem(
+    character: character,
+    onDelete: () async {
+      await viewModel.commands.deleteCharacter(character.id);
+    },
+    onTap: () async {
+      // Use 'character' aqui, que é o que vem da lista
+      final Character? result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CharacterCreateView(character: character), 
+        ),
+      );
+
+      if (result != null) {
+        await viewModel.commands.updateCharacter(result);
+      }
+    },
+  );
+}, childCount: characters.length),
                 ),
               ),
           ],
@@ -272,6 +288,7 @@ class FilterPanel extends StatelessWidget {
     return Watch((context) {
       final filtersCount = state.activeFiltersCount.value;
       final isExpanded = state.isFilterPanelExpanded.value;
+
 
       return Container(
         margin: EdgeInsets.only(

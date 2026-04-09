@@ -5,4 +5,6 @@ abstract interface class ICharacterFacadeUseCases {
   Future<CharacterResult> getCharacterById(CharacterIdParams params);
   Future<CharacterResult> saveCharacter(CharacterParams params);
   Future<CharacterResult> deleteCharacter(CharacterIdParams params);
+  //add e arrumado sem ser por id
+  Future<CharacterResult> updateCharacter(CharacterParams params);
 }
