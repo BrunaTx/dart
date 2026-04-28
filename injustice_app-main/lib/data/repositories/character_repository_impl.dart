@@ -32,8 +32,7 @@ final class CharacterRepositoryImpl implements ICharacterRepository {
   }
   
   @override
-  Future<dynamic> update(Character character) {
-    // TODO: implement update
-    throw UnimplementedError();
+  Future<CharacterResult> update(Character character) {
+    return _localStorage.updateCharacter(character);
   }
 }
